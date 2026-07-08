@@ -16,6 +16,9 @@ export class EmailVerification {
     @Column()
     token: string;
 
+    @Column()
+    expiresAt: Date;
+
     @CreateDateColumn()
     createdAt: Date;
 }
