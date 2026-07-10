@@ -50,7 +50,13 @@ export class ProductsService {
         });
     }
 
-    async findAll(query: PaginationQueryDto, featuredOnly = false, storeId?: string) {
+    async findAll(
+        query: PaginationQueryDto,
+        featuredOnly = false,
+        storeId?: string,
+        categoryId?: string,
+        activeOnly = false,
+    ) {
         const page = query.page ?? 1;
         const limit = query.limit ?? 20;
         const qb = this.productRepo
@@ -69,6 +75,15 @@ export class ProductsService {
             qb.andWhere('product.storeId = :storeId', { storeId });
         }
 
+        if (categoryId) {
+            qb.andWhere('product.categoryId = :categoryId', { categoryId });
+        }
+
+        if (activeOnly) {
+            qb.andWhere('product.isActive = true');
+            qb.andWhere('store.isActive = true');
+        }
+
         if (query.search) {
             qb.andWhere(
                 '(product.name ILIKE :search OR product.description ILIKE :search)',
@@ -78,6 +93,14 @@ export class ProductsService {
 
         const [data, total] = await qb.getManyAndCount();
         return { data, total, page, limit };
+    }
+
+    async findOnePublic(id: string): Promise<Product> {
+        const product = await this.findOne(id);
+        if (!product.isActive || !product.store?.isActive) {
+            throw new NotFoundException('Product not found');
+        }
+        return product;
     }
 
     async findOne(id: string): Promise<Product> {
