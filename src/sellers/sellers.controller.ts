@@ -10,7 +10,7 @@ export class SellersController {
     constructor(private readonly sellersService: SellersService) { }
 
     @Post('apply')
-    @ApiOperation({ summary: 'Apply to become a seller' })
+    @ApiOperation({ summary: 'Apply to become a seller by sending your email' })
     apply(@Body() dto: ApplySellerDto) {
         return this.sellersService.apply(dto);
     }

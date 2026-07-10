@@ -35,13 +35,17 @@ export class SellersService {
     ) { }
 
     async apply(dto: ApplySellerDto): Promise<{ message: string }> {
-        const existingUser = await this.userRepo.findOne({ where: { email: dto.email } });
+        const email = dto.email.toLowerCase().trim();
+        const fullName = dto.fullName?.trim() || email.split('@')[0];
+        const businessName = dto.businessName?.trim() || `${fullName}'s Store`;
+
+        const existingUser = await this.userRepo.findOne({ where: { email } });
         if (existingUser) {
             throw new ConflictException('An account with this email already exists');
         }
 
         const existingApplication = await this.applicationRepo.findOne({
-            where: { email: dto.email },
+            where: { email },
         });
 
         if (existingApplication) {
@@ -55,9 +59,9 @@ export class SellersService {
                 throw new ConflictException('This email is already associated with an approved seller');
             }
 
-            existingApplication.fullName = dto.fullName;
+            existingApplication.fullName = fullName;
             existingApplication.phone = dto.phone ?? null;
-            existingApplication.businessName = dto.businessName;
+            existingApplication.businessName = businessName;
             existingApplication.description = dto.description ?? null;
             existingApplication.status = SellerApplicationStatus.PENDING;
             existingApplication.rejectionReason = null;
@@ -71,10 +75,10 @@ export class SellersService {
         }
 
         const application = this.applicationRepo.create({
-            fullName: dto.fullName,
-            email: dto.email,
+            fullName,
+            email,
             phone: dto.phone ?? null,
-            businessName: dto.businessName,
+            businessName,
             description: dto.description ?? null,
             status: SellerApplicationStatus.PENDING,
         });
@@ -255,15 +259,17 @@ export class SellersService {
             }),
         );
 
-        await this.storeRepo.save(
-            this.storeRepo.create({
-                name: dto.storeName,
-                slug: uniqueSlug(dto.storeName),
-                description: dto.storeDescription ?? application.description,
-                ownerId: user.id,
-                isActive: true,
-            }),
-        );
+        if (dto.storeName) {
+            await this.storeRepo.save(
+                this.storeRepo.create({
+                    name: dto.storeName,
+                    slug: uniqueSlug(dto.storeName),
+                    description: dto.storeDescription ?? application.description,
+                    ownerId: user.id,
+                    isActive: true,
+                }),
+            );
+        }
 
         application.userId = user.id;
         application.inviteToken = null;
@@ -271,7 +277,9 @@ export class SellersService {
         await this.applicationRepo.save(application);
 
         return {
-            message: 'Seller account and shop created successfully. You can now log in.',
+            message: dto.storeName
+                ? 'Seller account and shop created successfully. You can now log in.'
+                : 'Seller account created successfully. Log in and create your store.',
         };
     }
 

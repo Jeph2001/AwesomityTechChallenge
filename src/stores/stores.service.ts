@@ -1,5 +1,6 @@
 import {
     ConflictException,
+    ForbiddenException,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
@@ -18,6 +19,8 @@ export class StoresService {
     ) { }
 
     async create(ownerId: string, dto: CreateStoreDto): Promise<Store> {
+        await this.ensureOwnerHasNoStore(ownerId);
+
         const store = this.storeRepo.create({
             name: dto.name,
             slug: uniqueSlug(dto.name),
@@ -60,6 +63,26 @@ export class StoresService {
         return store;
     }
 
+    async findByOwnerId(ownerId: string): Promise<Store | null> {
+        return this.storeRepo.findOne({
+            where: { ownerId },
+            relations: { owner: true },
+        });
+    }
+
+    async getOwnedStore(ownerId: string): Promise<Store> {
+        const store = await this.findByOwnerId(ownerId);
+        if (!store) {
+            throw new NotFoundException('You do not have a store yet. Create one first.');
+        }
+        return store;
+    }
+
+    async updateOwnedStore(ownerId: string, dto: UpdateStoreDto): Promise<Store> {
+        const store = await this.getOwnedStore(ownerId);
+        return this.update(store.id, dto);
+    }
+
     async update(id: string, dto: UpdateStoreDto): Promise<Store> {
         const store = await this.findOne(id);
 
@@ -86,7 +109,15 @@ export class StoresService {
     async ensureOwnerHasNoStore(ownerId: string): Promise<void> {
         const existing = await this.storeRepo.findOne({ where: { ownerId } });
         if (existing) {
-            throw new ConflictException('Owner already has a store');
+            throw new ConflictException('Sellers can only have one store');
         }
+    }
+
+    async assertStoreOwnership(storeId: string, ownerId: string): Promise<Store> {
+        const store = await this.findOne(storeId);
+        if (store.ownerId !== ownerId) {
+            throw new ForbiddenException('You do not own this store');
+        }
+        return store;
     }
 }

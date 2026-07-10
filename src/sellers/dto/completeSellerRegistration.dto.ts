@@ -8,9 +8,10 @@ export class CompleteSellerRegistrationDto {
     @MinLength(6)
     password: string;
 
+    @IsOptional()
     @IsString()
     @MinLength(2)
-    storeName: string;
+    storeName?: string;
 
     @IsOptional()
     @IsString()

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
@@ -11,7 +11,7 @@ export class OrdersService {
         @InjectRepository(Order) private readonly orderRepo: Repository<Order>,
     ) { }
 
-    async findAll(query: PaginationQueryDto, status?: OrderStatus) {
+    async findAll(query: PaginationQueryDto, status?: OrderStatus, storeId?: string) {
         const page = query.page ?? 1;
         const limit = query.limit ?? 20;
         const qb = this.orderRepo
@@ -25,6 +25,10 @@ export class OrdersService {
 
         if (status) {
             qb.andWhere('order.status = :status', { status });
+        }
+
+        if (storeId) {
+            qb.andWhere('order.storeId = :storeId', { storeId });
         }
 
         if (query.search) {
@@ -53,10 +57,27 @@ export class OrdersService {
         return order;
     }
 
+    async findOneInStore(id: string, storeId: string): Promise<Order> {
+        const order = await this.findOne(id);
+        if (order.storeId !== storeId) {
+            throw new ForbiddenException('This order does not belong to your store');
+        }
+        return order;
+    }
+
     async updateStatus(id: string, status: OrderStatus): Promise<Order> {
         const order = await this.findOne(id);
         order.status = status;
         return this.orderRepo.save(order);
+    }
+
+    async updateStatusInStore(
+        id: string,
+        storeId: string,
+        status: OrderStatus,
+    ): Promise<Order> {
+        await this.findOneInStore(id, storeId);
+        return this.updateStatus(id, status);
     }
 
     async remove(id: string): Promise<{ message: string }> {

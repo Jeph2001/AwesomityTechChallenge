@@ -1,20 +1,22 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class ApplySellerDto {
+    @IsEmail()
+    email: string;
+
+    @IsOptional()
     @IsString()
     @MinLength(3)
-    fullName: string;
-
-    @IsString()
-    email: string;
+    fullName?: string;
 
     @IsOptional()
     @IsString()
     phone?: string;
 
+    @IsOptional()
     @IsString()
     @MinLength(2)
-    businessName: string;
+    businessName?: string;
 
     @IsOptional()
     @IsString()
