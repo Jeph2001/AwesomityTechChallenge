@@ -4,5 +4,5 @@ export class UpdateProfileDto {
     @IsOptional()
     @IsString()
     @MinLength(2)
-    name?: string;
+    fullName?: string;
 }

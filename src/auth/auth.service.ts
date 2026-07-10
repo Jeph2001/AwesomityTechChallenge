@@ -113,12 +113,12 @@ export class AuthService {
         const payload = { sub: user.id, email: user.email, role: user.role };
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get<string>('jwt.accessTokenSecret'),
-            expiresIn: this.configService.get<number>('jwt.accessTokenExpiresIn'),
+            expiresIn: this.configService.get<string>('jwt.accessTokenExpiresIn') as any,
         });
 
         const refreshToken = this.jwtService.sign(payload, {
             secret: this.configService.get<string>('jwt.refreshTokenSecret'),
-            expiresIn: this.configService.get<number>('jwt.refreshTokenExpiresIn'),
+            expiresIn: this.configService.get<string>('jwt.refreshTokenExpiresIn') as any,
         });
 
         const refreshTokenHash = await bcrypt.hash(refreshToken, SALT_ROUNDS);
@@ -148,7 +148,7 @@ export class AuthService {
 
         const user = await this.userRepository
             .createQueryBuilder('user')
-            .addSelect('user.refreshTokenHash')
+            .addSelect('user.refreshToken')
             .where('user.id = :id', { id: payload.sub })
             .getOne();
 
