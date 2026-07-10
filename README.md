@@ -83,6 +83,23 @@ src/
 └── main.ts
 ```
 
+## Shopper APIs
+
+### Public catalog
+- `GET /api/products?search=&categoryId=` — browse/search products
+- `GET /api/products/featured`
+- `GET /api/products/:id`
+- `GET /api/products/:id/reviews`
+- `GET /api/categories`
+
+### Authenticated shopper (`SHOPPER` role)
+| Area | Endpoints |
+|------|-----------|
+| Orders | `POST/GET /api/shoppers/me/orders`, `GET .../:id` |
+| Reviews | `POST/GET/PATCH/DELETE /api/shoppers/me/reviews` |
+
+Order status changes (admin/seller) email the shopper automatically.
+
 ## Seller APIs
 
 ### Public

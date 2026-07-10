@@ -15,6 +15,8 @@ import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { AdminModule } from './admin/admin.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { ShoppersModule } from './shoppers/shoppers.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { AdminModule } from './admin/admin.module';
     CategoriesModule,
     ProductsModule,
     OrdersModule,
+    ReviewsModule,
+    ShoppersModule,
     AdminModule,
   ],
   controllers: [AppController, HealthController],
