@@ -83,6 +83,19 @@ src/
 └── main.ts
 ```
 
+## Seller APIs
+
+### Public
+- `POST /api/sellers/apply` — apply with email (optional name/business details)
+- `POST /api/sellers/complete-registration` — create account (+ optional shop) after approval
+
+### Authenticated seller (`SELLER` role)
+| Area | Endpoints |
+|------|-----------|
+| Store | `GET/POST/PATCH /api/sellers/me/store` (one store only) |
+| Products | `GET/POST/PATCH/DELETE /api/sellers/me/products` |
+| Orders | `GET /api/sellers/me/orders`, `GET .../:id`, `PATCH .../:id/status` |
+
 ## Admin Setup
 
 ```bash

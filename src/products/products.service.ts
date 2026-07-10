@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
@@ -39,7 +39,18 @@ export class ProductsService {
         return this.productRepo.save(product);
     }
 
-    async findAll(query: PaginationQueryDto, featuredOnly = false) {
+    async createForStore(
+        storeId: string,
+        dto: Omit<CreateProductDto, 'storeId' | 'isFeatured'>,
+    ): Promise<Product> {
+        return this.create({
+            ...dto,
+            storeId,
+            isFeatured: false,
+        });
+    }
+
+    async findAll(query: PaginationQueryDto, featuredOnly = false, storeId?: string) {
         const page = query.page ?? 1;
         const limit = query.limit ?? 20;
         const qb = this.productRepo
@@ -52,6 +63,10 @@ export class ProductsService {
 
         if (featuredOnly) {
             qb.andWhere('product.isFeatured = true');
+        }
+
+        if (storeId) {
+            qb.andWhere('product.storeId = :storeId', { storeId });
         }
 
         if (query.search) {
@@ -76,6 +91,14 @@ export class ProductsService {
         return product;
     }
 
+    async findOneInStore(id: string, storeId: string): Promise<Product> {
+        const product = await this.findOne(id);
+        if (product.storeId !== storeId) {
+            throw new ForbiddenException('This product does not belong to your store');
+        }
+        return product;
+    }
+
     async update(id: string, dto: UpdateProductDto): Promise<Product> {
         const product = await this.findOne(id);
 
@@ -91,6 +114,15 @@ export class ProductsService {
         return this.productRepo.save(product);
     }
 
+    async updateInStore(
+        id: string,
+        storeId: string,
+        dto: Omit<UpdateProductDto, 'isFeatured'>,
+    ): Promise<Product> {
+        await this.findOneInStore(id, storeId);
+        return this.update(id, dto);
+    }
+
     async setFeatured(id: string, isFeatured: boolean): Promise<Product> {
         const product = await this.findOne(id);
         product.isFeatured = isFeatured;
@@ -101,5 +133,10 @@ export class ProductsService {
         const product = await this.findOne(id);
         await this.productRepo.remove(product);
         return { message: 'Product deleted successfully' };
+    }
+
+    async removeInStore(id: string, storeId: string): Promise<{ message: string }> {
+        await this.findOneInStore(id, storeId);
+        return this.remove(id);
     }
 }
