@@ -12,6 +12,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Store } from 'src/stores/entities/store.entity';
 import { OrderStatus } from '../enums/orderStatus.enum';
 import { OrderItem } from './orderItem.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
 
 @Entity('orders')
 export class Order {
@@ -47,6 +48,9 @@ export class Order {
 
     @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
     items: OrderItem[];
+
+    @OneToMany(() => Payment, (payment) => payment.order)
+    payments: Payment[];
 
     @CreateDateColumn()
     createdAt: Date;

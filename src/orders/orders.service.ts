@@ -195,6 +195,7 @@ export class OrdersService {
                 user: true,
                 store: true,
                 items: { product: true },
+                payments: true,
             },
         });
         if (!order) {

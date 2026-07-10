@@ -96,7 +96,13 @@ src/
 | Area | Endpoints |
 |------|-----------|
 | Orders | `POST/GET /api/shoppers/me/orders`, `GET .../:id` |
+| Payments | `POST /api/shoppers/me/orders/:id/pay`, `GET .../:id/payments` |
 | Reviews | `POST/GET/PATCH/DELETE /api/shoppers/me/reviews` |
+
+#### Mock payments
+- **Card** (`method: "card"`): 16-digit number ending in an **even** digit succeeds (e.g. `4242424242424242`). Odd digit fails.
+- **Mobile money** (`method: "mobile_money"`): phone ending in `0-7` succeeds; `8` or `9` fails. Providers: `mtn`, `airtel`.
+- Successful payment confirms the order (`pending` → `confirmed`).
 
 Order status changes (admin/seller) email the shopper automatically.
 
