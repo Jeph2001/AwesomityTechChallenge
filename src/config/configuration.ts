@@ -1,5 +1,3 @@
-import { ref } from "process";
-
 export default () => ({
   port: parseInt(process.env.PORT ?? '3000', 10),
   database: {
@@ -27,10 +25,10 @@ export default () => ({
     from: process.env.MAIL_FROM ?? 'Awesomity API <noreply@awesomity.com>',
   },
   jwt: {
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRES_IN ?? '1h',
-    refreshSecret: process.env.JWT_REFRESH_SECRET,
-    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+    accessTokenSecret: process.env.JWT_SECRET ?? 'dev-jwt-secret',
+    accessTokenExpiresIn: process.env.JWT_EXPIRES_IN ?? '1h',
+    refreshTokenSecret: process.env.JWT_REFRESH_SECRET ?? 'dev-jwt-refresh-secret',
+    refreshTokenExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   },
   app: {
     baseUrl: process.env.APP_BASE_URL ?? 'http://localhost:3000',

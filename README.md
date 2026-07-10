@@ -66,14 +66,51 @@ npm run start:prod
 
 ```
 src/
+├── admin/            # Admin-only management APIs
+├── auth/             # Authentication & JWT
+├── users/            # User profile
+├── sellers/          # Seller applications & registration
+├── stores/           # Store domain
+├── products/         # Product domain (incl. featured)
+├── categories/       # Category domain
+├── orders/           # Order domain
 ├── config/           # Environment configuration
 ├── database/         # TypeORM setup
 ├── mail/             # Nodemailer email service
 ├── rabbitmq/         # RabbitMQ client service
 ├── health/           # Health check endpoint
-├── app.module.ts     # Root module
-└── main.ts           # Bootstrap + Swagger
+├── app.module.ts
+└── main.ts
 ```
+
+## Admin Setup
+
+```bash
+npm run seed:admin
+```
+
+Default admin credentials:
+- Email: `admin@awesomity.com`
+- Password: `Admin123!`
+
+## Seller Approval Flow
+
+1. Applicant: `POST /api/sellers/apply`
+2. Admin: `POST /api/admin/sellers/applications/:id/approve` (sends invite email)
+3. Seller: `POST /api/sellers/complete-registration` with invite token, password, and store details
+
+## Admin APIs (JWT + ADMIN role)
+
+| Area | Endpoints |
+|------|-----------|
+| Users | `GET/PATCH/DELETE /api/admin/users` |
+| Sellers | `GET /api/admin/sellers/applications`, approve/reject |
+| Stores | `GET/POST/PATCH/DELETE /api/admin/stores` |
+| Products | `GET/POST/PATCH/DELETE /api/admin/products`, `PATCH .../featured` |
+| Orders | `GET/PATCH/DELETE /api/admin/orders` |
+| Categories | `GET/POST/PATCH/DELETE /api/admin/categories` |
+
+Full docs: http://localhost:3000/api/docs
 
 ## Usage Examples
 

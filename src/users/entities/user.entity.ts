@@ -25,7 +25,7 @@ export class User {
     @Column({ default: true })
     isActive: boolean;
 
-    @Column({ select: false, nullable: true })
+    @Column({ type: 'varchar', select: false, nullable: true })
     refreshToken: string | null;
 
     @CreateDateColumn()

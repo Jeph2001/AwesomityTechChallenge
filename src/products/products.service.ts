@@ -1,0 +1,105 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Product } from './entities/product.entity';
+import { CreateProductDto } from './dto/createProduct.dto';
+import { UpdateProductDto } from './dto/updateProduct.dto';
+import { PaginationQueryDto } from 'src/common/dto/paginationQuery.dto';
+import { StoresService } from 'src/stores/stores.service';
+import { CategoriesService } from 'src/categories/categories.service';
+
+@Injectable()
+export class ProductsService {
+    constructor(
+        @InjectRepository(Product)
+        private readonly productRepo: Repository<Product>,
+        private readonly storesService: StoresService,
+        private readonly categoriesService: CategoriesService,
+    ) { }
+
+    async create(dto: CreateProductDto): Promise<Product> {
+        await this.storesService.findOne(dto.storeId);
+
+        if (dto.categoryId) {
+            await this.categoriesService.findOne(dto.categoryId);
+        }
+
+        const product = this.productRepo.create({
+            name: dto.name,
+            description: dto.description ?? null,
+            price: dto.price,
+            stock: dto.stock,
+            storeId: dto.storeId,
+            categoryId: dto.categoryId ?? null,
+            imageUrl: dto.imageUrl ?? null,
+            isFeatured: dto.isFeatured ?? false,
+            isActive: dto.isActive ?? true,
+        });
+
+        return this.productRepo.save(product);
+    }
+
+    async findAll(query: PaginationQueryDto, featuredOnly = false) {
+        const page = query.page ?? 1;
+        const limit = query.limit ?? 20;
+        const qb = this.productRepo
+            .createQueryBuilder('product')
+            .leftJoinAndSelect('product.store', 'store')
+            .leftJoinAndSelect('product.category', 'category')
+            .orderBy('product.createdAt', 'DESC')
+            .skip((page - 1) * limit)
+            .take(limit);
+
+        if (featuredOnly) {
+            qb.andWhere('product.isFeatured = true');
+        }
+
+        if (query.search) {
+            qb.andWhere(
+                '(product.name ILIKE :search OR product.description ILIKE :search)',
+                { search: `%${query.search}%` },
+            );
+        }
+
+        const [data, total] = await qb.getManyAndCount();
+        return { data, total, page, limit };
+    }
+
+    async findOne(id: string): Promise<Product> {
+        const product = await this.productRepo.findOne({
+            where: { id },
+            relations: { store: true, category: true },
+        });
+        if (!product) {
+            throw new NotFoundException('Product not found');
+        }
+        return product;
+    }
+
+    async update(id: string, dto: UpdateProductDto): Promise<Product> {
+        const product = await this.findOne(id);
+
+        if (dto.categoryId) {
+            await this.categoriesService.findOne(dto.categoryId);
+        }
+
+        Object.assign(product, {
+            ...dto,
+            categoryId: dto.categoryId === undefined ? product.categoryId : dto.categoryId,
+        });
+
+        return this.productRepo.save(product);
+    }
+
+    async setFeatured(id: string, isFeatured: boolean): Promise<Product> {
+        const product = await this.findOne(id);
+        product.isFeatured = isFeatured;
+        return this.productRepo.save(product);
+    }
+
+    async remove(id: string): Promise<{ message: string }> {
+        const product = await this.findOne(id);
+        await this.productRepo.remove(product);
+        return { message: 'Product deleted successfully' };
+    }
+}
