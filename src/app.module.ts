@@ -7,6 +7,9 @@ import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
 import { MailModule } from './mail/mail.module';
 import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
+import { User } from './users/entities/user.entity';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +21,8 @@ import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
     DatabaseModule,
     MailModule,
     RabbitmqModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
