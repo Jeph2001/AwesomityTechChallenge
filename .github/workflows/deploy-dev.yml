@@ -120,27 +120,27 @@ jobs:
               -e PORT=3000 \
               -e POSTGRES_HOST=awesomity-postgres \
               -e POSTGRES_PORT=5432 \
-              -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
-              -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-              -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
-              -e TYPEORM_SYNCHRONIZE=${{ secrets.TYPEORM_SYNCHRONIZE }} \
-              -e TYPEORM_LOGGING=${{ secrets.TYPEORM_LOGGING }} \
+              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+              -e TYPEORM_SYNCHRONIZE="${{ secrets.TYPEORM_SYNCHRONIZE }}" \
+              -e TYPEORM_LOGGING="${{ secrets.TYPEORM_LOGGING }}" \
               -e RABBITMQ_HOST=awesomity-rabbitmq \
               -e RABBITMQ_PORT=5672 \
-              -e RABBITMQ_USER=${{ secrets.RABBITMQ_USER }} \
-              -e RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }} \
-              -e RABBITMQ_QUEUE=${{ secrets.RABBITMQ_QUEUE }} \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              -e JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }} \
-              -e JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
-              -e JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }} \
-              -e APP_BASE_URL=${{ secrets.APP_BASE_URL }} \
-              -e MAIL_HOST=${{ secrets.MAIL_HOST }} \
-              -e MAIL_PORT=${{ secrets.MAIL_PORT }} \
-              -e MAIL_SECURE=${{ secrets.MAIL_SECURE }} \
-              -e MAIL_USER=${{ secrets.MAIL_USER }} \
-              -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} \
-              -e MAIL_FROM=${{ secrets.MAIL_FROM }} \
+              -e RABBITMQ_USER="${{ secrets.RABBITMQ_USER }}" \
+              -e RABBITMQ_PASSWORD="${{ secrets.RABBITMQ_PASSWORD }}" \
+              -e RABBITMQ_QUEUE="${{ secrets.RABBITMQ_QUEUE }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_EXPIRES_IN="${{ secrets.JWT_EXPIRES_IN }}" \
+              -e JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
+              -e JWT_REFRESH_EXPIRES_IN="${{ secrets.JWT_REFRESH_EXPIRES_IN }}" \
+              -e APP_BASE_URL="${{ secrets.APP_BASE_URL }}" \
+              -e MAIL_HOST="${{ secrets.MAIL_HOST }}" \
+              -e MAIL_PORT="${{ secrets.MAIL_PORT }}" \
+              -e MAIL_SECURE="${{ secrets.MAIL_SECURE }}" \
+              -e MAIL_USER="${{ secrets.MAIL_USER }}" \
+              -e MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
+              -e MAIL_FROM="${{ secrets.MAIL_FROM }}" \
               ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest
 
             # Cleanup old images
