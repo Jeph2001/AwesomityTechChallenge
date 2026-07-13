@@ -14,16 +14,16 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 import { Role } from 'src/users/enums/role.enum';
 import { User } from 'src/users/entities/user.entity';
-import { StoresService } from 'src/stores/stores.service';
-import { CreateStoreDto } from 'src/stores/dto/createStore.dto';
-import { UpdateStoreDto } from 'src/stores/dto/updateStore.dto';
+import { StoresService } from './stores.service';
+import { CreateStoreDto } from './dto/createStore.dto';
+import { UpdateStoreDto } from './dto/updateStore.dto';
 
-@ApiTags('seller-store')
+@ApiTags('stores')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.SELLER)
-@Controller('sellers/me/store')
-export class SellerStoreController {
+@Controller('stores/me')
+export class StoresController {
     constructor(private readonly storesService: StoresService) { }
 
     @Get()

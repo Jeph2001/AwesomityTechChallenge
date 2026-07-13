@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SellerApplication } from './entities/sellerApplication.entity';
 import { SellersService } from './sellers.service';
 import { SellersController } from './sellers.controller';
-import { SellerStoreController } from './controllers/sellerStore.controller';
 import { SellerProductsController } from './controllers/sellerProducts.controller';
 import { SellerOrdersController } from './controllers/sellerOrders.controller';
 import { User } from 'src/users/entities/user.entity';
@@ -21,7 +20,6 @@ import { OrdersModule } from 'src/orders/orders.module';
     ],
     controllers: [
         SellersController,
-        SellerStoreController,
         SellerProductsController,
         SellerOrdersController,
     ],
