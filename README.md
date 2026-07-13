@@ -57,10 +57,9 @@ npm run start:prod
 
 | Resource | URL |
 |----------|-----|
-| API base | http://localhost:3000/api |
-| Swagger docs | http://localhost:3000/api/docs |
-| Health check | http://localhost:3000/api/health |
-| RabbitMQ UI | http://localhost:15672 (guest/guest) |
+| API base | https://awesomity-challenge.mycodepay.com/api |
+| Swagger docs | https://awesomity-challenge.mycodepay.com/api/docs |
+| Health check | https://awesomity-challenge.mycodepay.com/api/health |
 
 ## Project Structure
 
