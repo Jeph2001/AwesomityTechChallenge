@@ -115,7 +115,7 @@ Order status changes (admin/seller) email the shopper automatically.
 ### Authenticated seller (`SELLER` role)
 | Area | Endpoints |
 |------|-----------|
-| Store | `GET/POST/PATCH /api/sellers/me/store` (one store only) |
+| Store | `GET/POST/PATCH /api/stores/me` (one store only) |
 | Products | `GET/POST/PATCH/DELETE /api/sellers/me/products` |
 | Orders | `GET /api/sellers/me/orders`, `GET .../:id`, `PATCH .../:id/status` |
 
@@ -181,3 +181,27 @@ npm run docker:up      # Start PostgreSQL & RabbitMQ
 npm run docker:down    # Stop containers
 npm run docker:logs    # View container logs
 ```
+
+## CI/CD (dev branch)
+
+Push/merge to `dev` triggers `.github/workflows/deploy-dev.yml`:
+
+1. Builds and pushes `ghcr.io/<owner>/awesomity-api:latest` (+ short SHA tag)
+2. On **push** to `dev`, SSHs to the server, pulls the image, ensures Postgres + RabbitMQ, then restarts the API container
+
+Required GitHub secrets:
+
+| Secret | Purpose |
+|--------|---------|
+| `DEPLOYER_HOST` | Server IP/hostname |
+| `DEPLOYER_USER` | SSH username |
+| `DEPLOYER_KEY` | SSH private key |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Database |
+| `RABBITMQ_USER` / `RABBITMQ_PASSWORD` / `RABBITMQ_QUEUE` | RabbitMQ |
+| `JWT_SECRET` / `JWT_REFRESH_SECRET` | Auth |
+| `JWT_EXPIRES_IN` / `JWT_REFRESH_EXPIRES_IN` | Token TTL |
+| `APP_BASE_URL` | Public API URL |
+| `MAIL_*` | SMTP settings |
+| `TYPEORM_SYNCHRONIZE` / `TYPEORM_LOGGING` | TypeORM flags (`true`/`false`) |
+
+Package visibility: make the GHCR package public, or use a PAT with `read:packages` if private pulls fail on the server.

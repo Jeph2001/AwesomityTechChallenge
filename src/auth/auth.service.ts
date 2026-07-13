@@ -59,7 +59,7 @@ export class AuthService {
                 expiresAt,
             })
         );
-        const verifyUrl = `${this.configService.get<string>('app.baseUrl')}/auth/verify-email?token=${rawToken}`;
+        const verifyUrl = `${this.configService.get<string>('app.baseUrl')}/api/auth/verify-email?token=${rawToken}`;
 
         await this.mailService.sendMail({
             to: user.email,

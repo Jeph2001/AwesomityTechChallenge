@@ -1,0 +1,156 @@
+name: Build and Deploy API - Dev
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: awesomity-api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Short SHA for Image Tag
+        uses: benjlevesque/short-sha@v2.2
+        id: short-sha
+        with:
+          length: 6
+
+      - name: Set lowercase image owner
+        run: echo "IMAGE_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            -t ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:${{ steps.short-sha.outputs.sha }} \
+            -t ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest \
+            .
+
+      - name: Push Docker Image
+        run: |
+          docker push ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:${{ steps.short-sha.outputs.sha }}
+          docker push ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest
+
+  deploy:
+    name: Deploy on Push to dev (merge)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: awesomity-api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set lowercase image owner
+        run: echo "IMAGE_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.2
+        with:
+          host: ${{ secrets.DEPLOYER_HOST }}
+          username: ${{ secrets.DEPLOYER_USER }}
+          key: ${{ secrets.DEPLOYER_KEY }}
+          script: |
+            set -e
+
+            IMAGE_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME=awesomity-api
+            CONTAINER_NAME=awesomity-api-dev
+            NETWORK_NAME=awesomity-net
+
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+            docker pull ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest
+
+            docker network inspect $NETWORK_NAME >/dev/null 2>&1 || docker network create $NETWORK_NAME
+
+            # PostgreSQL
+            docker inspect awesomity-postgres >/dev/null 2>&1 || docker run -d \
+              --name awesomity-postgres \
+              --network $NETWORK_NAME \
+              --restart unless-stopped \
+              -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
+              -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+              -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
+              -v awesomity_postgres_data:/var/lib/postgresql/data \
+              postgres:16-alpine
+
+            # RabbitMQ
+            docker inspect awesomity-rabbitmq >/dev/null 2>&1 || docker run -d \
+              --name awesomity-rabbitmq \
+              --network $NETWORK_NAME \
+              --restart unless-stopped \
+              -e RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_USER }} \
+              -e RABBITMQ_DEFAULT_PASS=${{ secrets.RABBITMQ_PASSWORD }} \
+              -v awesomity_rabbitmq_data:/var/lib/rabbitmq \
+              rabbitmq:3-management-alpine
+
+            echo "Waiting for infrastructure..."
+            sleep 15
+
+            # API (stop old, run new)
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+
+            docker run -d \
+              --name $CONTAINER_NAME \
+              --network $NETWORK_NAME \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              -e NODE_ENV=production \
+              -e PORT=3000 \
+              -e POSTGRES_HOST=awesomity-postgres \
+              -e POSTGRES_PORT=5432 \
+              -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
+              -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+              -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
+              -e TYPEORM_SYNCHRONIZE=${{ secrets.TYPEORM_SYNCHRONIZE }} \
+              -e TYPEORM_LOGGING=${{ secrets.TYPEORM_LOGGING }} \
+              -e RABBITMQ_HOST=awesomity-rabbitmq \
+              -e RABBITMQ_PORT=5672 \
+              -e RABBITMQ_USER=${{ secrets.RABBITMQ_USER }} \
+              -e RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }} \
+              -e RABBITMQ_QUEUE=${{ secrets.RABBITMQ_QUEUE }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }} \
+              -e JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
+              -e JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }} \
+              -e APP_BASE_URL=${{ secrets.APP_BASE_URL }} \
+              -e MAIL_HOST=${{ secrets.MAIL_HOST }} \
+              -e MAIL_PORT=${{ secrets.MAIL_PORT }} \
+              -e MAIL_SECURE=${{ secrets.MAIL_SECURE }} \
+              -e MAIL_USER=${{ secrets.MAIL_USER }} \
+              -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} \
+              -e MAIL_FROM=${{ secrets.MAIL_FROM }} \
+              ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest
+
+            # Cleanup old images
+            docker image prune -af --filter "until=24h" || true
+
+            echo "Deploy complete!"
+
+      - name: Post-deploy Cleanup
+        if: always()
+        run: |
+          docker system prune -af
+          sudo rm -rf /usr/local/share/.cache/* || true
+          sudo rm -rf /opt/hostedtoolcache/* || true
